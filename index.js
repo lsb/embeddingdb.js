@@ -110,7 +110,7 @@ module.exports = {
     distTopK,
     queryDist,
     queryToTiledDist,
-    env,
     makeONNXRunnables,
     flattenCodebook,
+    env,
 }
