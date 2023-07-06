@@ -1,6 +1,6 @@
 {
   "name": "embeddingdb.js",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "An embedding database for the browser",
   "dependencies": {
     "@xenova/transformers": "^2.3.1",

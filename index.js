@@ -17,7 +17,7 @@
 
 
 import { tableFromIPC } from 'apache-arrow';
-import { pipeline, env } from '@xenova/transformers';
+import { pipeline } from '@xenova/transformers';
 import * as ort from 'onnxruntime-web';
 import {filteredTopKAsc, pqDist} from 'pq.js';
 
@@ -50,7 +50,7 @@ async function queryDist(inferenceSession, query, codebook, codebookShape, embed
     return distTile;
 }
   
-async function queryToTiledDist(query, embeddings, codebk, pqdistinf, dists, firstLetters, firstLetterInt, filteredtopkinf, k, intermediateValueFn, continueFn, embeddingCounter=0) {
+async function queryToTiledDist(query, embeddings, codebk, codebkflat, pqdistinf, dists, firstLetters, firstLetterInt, filteredtopkinf, k, intermediateValueFn, continueFn, embeddingCounter=0) {
     // compute distances a chunk of an embedding shard at a time,
     // mutate the dists array,
     // compute topk not more frequently than every `maxTick` milliseconds to avoid jitter,
@@ -59,6 +59,8 @@ async function queryToTiledDist(query, embeddings, codebk, pqdistinf, dists, fir
 
     let lastPaint = Date.now();
     const timingStrings = [];
+    const codebookshape = [codebk.length, codebk[0].length, codebk[0][0].length];
+
     for(; embeddingCounter<embeddings.length; embeddingCounter++){
       const {data: embeddingData, offset: embeddingOffset} = embeddings[embeddingCounter];
       for(let i=0; i < (embeddingData.length / codebk.length) && continueFn(); i += env.chunkSize) {
@@ -97,10 +99,18 @@ async function makeONNXRunnables() {
     return {pqdistinf, filteredtopkinf};
 }
 
+function flattenCodebook(codebk) {
+  return Float32Array.from(
+    {length: codebk.length * codebk[0].length * codebk[0][0].length},
+    (e,i) => codebk[Math.floor(i / codebk[0].length / codebk[0][0].length)][Math.floor(i / codebk[0][0].length) % codebk[0].length][i % codebk[0][0].length]
+  )
+}
+
 module.exports = {
     distTopK,
     queryDist,
     queryToTiledDist,
     env,
     makeONNXRunnables,
+    flattenCodebook,
 }
