@@ -29,7 +29,7 @@ const env = {
 const InferenceSession = ort.InferenceSession;
 const Tensor = ort.Tensor;
 
-async function distTopK(inferenceSession, dists, filterColumn, filterValue, filterZero, filterShim, k) {
+const distTopK = async function (inferenceSession, dists, filterColumn, filterValue, filterZero, filterShim, k) {
     const {output: {data: topk}} = await inferenceSession.run({
         "input": (new Tensor("float32", dists)),
         "filterColumn": (new Tensor("float32", filterColumn)),
@@ -40,8 +40,9 @@ async function distTopK(inferenceSession, dists, filterColumn, filterValue, filt
     });
     return topk;
 }
-  
-async function queryDist(inferenceSession, query, codebook, codebookShape, embeddings, embeddingTensorShape) {
+
+
+const queryDist = async function (inferenceSession, query, codebook, codebookShape, embeddings, embeddingTensorShape) {
     const {output: {data: distTile}} = await inferenceSession.run({
         "query": (new Tensor("float32", query)),
         "codebook": (new Tensor("float32", codebook, codebookShape)),
@@ -49,8 +50,9 @@ async function queryDist(inferenceSession, query, codebook, codebookShape, embed
     })
     return distTile;
 }
-  
-async function queryToTiledDist(query, embeddings, codebk, codebkflat, pqdistinf, dists, firstLetters, firstLetterInt, filteredtopkinf, k, intermediateValueFn, continueFn, embeddingCounter=0) {
+
+
+const queryToTiledDist = async function (query, embeddings, codebk, codebkflat, pqdistinf, dists, firstLetters, firstLetterInt, filteredtopkinf, k, intermediateValueFn, continueFn, embeddingCounter=0) {
     // compute distances a chunk of an embedding shard at a time,
     // mutate the dists array,
     // compute topk not more frequently than every `maxTick` milliseconds to avoid jitter,
@@ -93,18 +95,16 @@ async function queryToTiledDist(query, embeddings, codebk, codebkflat, pqdistinf
 }
 
 
-async function makeONNXRunnables() {
+const makeONNXRunnables = async function () {
     const filteredtopkinf = await InferenceSession.create(filteredTopKAsc);
     const pqdistinf = await InferenceSession.create(pqDist, {executionProviders: ['wasm']});
     return {pqdistinf, filteredtopkinf};
 }
 
-function flattenCodebook(codebk) {
-  return Float32Array.from(
+const flattenCodebook = (codebk) => Float32Array.from(
     {length: codebk.length * codebk[0].length * codebk[0][0].length},
     (e,i) => codebk[Math.floor(i / codebk[0].length / codebk[0][0].length)][Math.floor(i / codebk[0][0].length) % codebk[0].length][i % codebk[0][0].length]
-  )
-}
+)
 
 module.exports = {
     distTopK,
