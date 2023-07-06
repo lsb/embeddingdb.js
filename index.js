@@ -106,7 +106,7 @@ const flattenCodebook = (codebk) => Float32Array.from(
     (e,i) => codebk[Math.floor(i / codebk[0].length / codebk[0][0].length)][Math.floor(i / codebk[0][0].length) % codebk[0].length][i % codebk[0][0].length]
 )
 
-module.exports = {
+export {
     distTopK,
     queryDist,
     queryToTiledDist,
